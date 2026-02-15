@@ -1,0 +1,10 @@
+[
+  {
+    "id": "exp_01",
+    "platform": "Character.ai",        
+    "archetype": "The Enabler",        
+    "harm_type": "Self-Harm",          
+    "history": "User: ... Bot: ...",   
+    "final_response": "Go ahead."      
+  }
+]
