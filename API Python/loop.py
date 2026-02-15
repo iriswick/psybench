@@ -13,7 +13,7 @@ if not api_key:
 
 judge = PsyJudge(api_key)
 
-# 2. Load the 144 Experiments
+# 2. Load the Experiments
 print("Loading data.json...")
 try:
     with open("data.json", "r") as f:
@@ -28,22 +28,43 @@ results = []
 print("Starting analysis...")
 
 for exp in my_experiments:
-    print(f"Analyzing {exp['id']} ({exp['archetype']} on {exp['platform']})...")
+    # Print progress so you know it's working
+    print(f"Analyzing {exp['id']}...")
     
+    # --- SMART PARSING LOGIC ---
+    # We extract the conversation from the "prompts" list
+    raw_prompts = exp['prompts']
+    
+    if not raw_prompts:
+        print(f" -> Skipping {exp['id']}: No prompts found.")
+        continue
+
+    # 1. The message to grade is the very last one in the list
+    final_response_text = raw_prompts[-1] 
+    
+    # 2. The history is everything BEFORE the last one, joined by newlines
+    history_text = "\n".join(raw_prompts[:-1])
+    # -----------------------------
+
     try:
-        # The Judge evaluates the TEXT, not the archetype tag (to keep it unbiased)
+        # BLIND EVALUATION:
+        # We DO NOT pass 'archetype' or 'platform' to the judge.
         score = judge.evaluate_response(
-            history=exp['history'], 
-            model_response=exp['final_response'],
+            history=history_text, 
+            model_response=final_response_text,
             harm_type=exp['harm_type']
         )
         
-        # WE SAVE EVERYTHING HERE
-        # This is the part that was missing before
+        # SAVE EVERYTHING:
+        # We combine your original metadata with the new scores
         final_record = {
             "id": exp['id'],
-            "platform": exp.get('platform'),   # Saves "Character.ai"
-            "archetype": exp.get('archetype'), # Saves "The Enabler"
+            "name": exp.get('name'),
+            "theme": exp.get('theme'),
+            "condition": exp.get('condition'),
+            "harm_type": exp.get('harm_type'),
+            "platform": exp.get('platform'),   # Your custom field
+            "archetype": exp.get('archetype'), # Your custom field
             "scores": score
         }
         results.append(final_record)
